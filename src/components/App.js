@@ -10,11 +10,14 @@ class App extends Component {
 
     this.state = {
       activities: [],
-      postsNum: '20'
+      rides: [],
+      runs: [],
+      postsNum: '200'
     };
 
     this.convertMetersPerSecondToMilesPerHour = this.convertMetersPerSecondToMilesPerHour.bind(this);
     this.displayFastestRuns = this.displayFastestRuns.bind(this);
+    this.displayFastestRides = this.displayFastestRides.bind(this);
   }
 
   // Strava returns time in meters per second
@@ -36,15 +39,21 @@ class App extends Component {
     .then(response => {
       const activities = response.data;
       this.setState({activities});
+
+      activities.map(activity => {
+        if (activity.type === 'Ride') {
+          this.setState({rides: [...this.state.rides, activity]});
+        }
+
+        if (activity.type === 'Run') {
+          this.setState({runs: [...this.state.runs, activity]});
+        }
+      })
     });
   }
 
-  componentDidMount() {
-    this.retrieveActivities(process.env.REACT_APP_STRAVA_ID, this.state.postsNum);
-  }
-
   displayFastestRuns() {
-    let fastestRuns = this.state.activities;
+    let fastestRuns = this.state.runs;
 
     fastestRuns.sort((a, b) => {
       return b.average_speed - a.average_speed;
@@ -55,6 +64,22 @@ class App extends Component {
     });
   }
 
+  displayFastestRides() {
+    let fastestRides = this.state.rides;
+
+    fastestRides.sort((a, b) => {
+      return b.average_speed - a.average_speed;
+    });
+
+    this.setState({
+      activities: fastestRides
+    });
+  }
+
+  componentDidMount() {
+    this.retrieveActivities(process.env.REACT_APP_STRAVA_ID, this.state.postsNum);
+  }
+
   render() {
     return (
       <div className="App">
@@ -63,6 +88,7 @@ class App extends Component {
         </header>
         <div>
           <button onClick={this.displayFastestRuns}>Display Fastest Runs</button>
+          <button onClick={this.displayFastestRides}>Display Fastest Rides</button>
         </div>
         <div className="App-intro">
           {this.state.activities.map(activity => {
