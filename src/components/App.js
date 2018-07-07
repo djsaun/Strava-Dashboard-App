@@ -10,9 +10,11 @@ class App extends Component {
 
     this.state = {
       activities: [],
+      displayedActivities: [],
       rides: [],
       runs: [],
-      postsNum: '200'
+      postsNum: 200,
+      postsPerPage: 20
     };
 
     this.convertMetersPerSecondToMilesPerHour = this.convertMetersPerSecondToMilesPerHour.bind(this);
@@ -40,6 +42,10 @@ class App extends Component {
       const activities = response.data;
       this.setState({activities});
 
+      activities.slice(0, this.state.postsPerPage).map(activity => {
+        this.setState({displayedActivities: [...this.state.displayedActivities, activity]});
+      })
+
       activities.map(activity => {
         if (activity.type === 'Ride') {
           this.setState({rides: [...this.state.rides, activity]});
@@ -53,26 +59,26 @@ class App extends Component {
   }
 
   displayFastestRuns() {
-    let fastestRuns = this.state.runs;
+    let fastestRuns = this.state.runs.slice(0, this.state.postsPerPage);
 
     fastestRuns.sort((a, b) => {
       return b.average_speed - a.average_speed;
     });
 
     this.setState({
-      activities: fastestRuns
+      displayedActivities: fastestRuns
     });
   }
 
   displayFastestRides() {
-    let fastestRides = this.state.rides;
+    let fastestRides = this.state.rides.slice(0, this.state.postsPerPage);
 
     fastestRides.sort((a, b) => {
       return b.average_speed - a.average_speed;
     });
 
     this.setState({
-      activities: fastestRides
+      displayedActivities: fastestRides
     });
   }
 
@@ -90,8 +96,8 @@ class App extends Component {
           <button onClick={this.displayFastestRuns}>Display Fastest Runs</button>
           <button onClick={this.displayFastestRides}>Display Fastest Rides</button>
         </div>
-        <div className="App-intro">
-          {this.state.activities.map(activity => {
+        <div className="activities">
+          {this.state.displayedActivities.map(activity => {
             return <Activity key={activity.id} data={activity} convertTime={this.convertMetersPerSecondToMilesPerHour} />
           })}
         </div>

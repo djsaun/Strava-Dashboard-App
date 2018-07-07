@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import '../css/Activity.css';
 
 class Activity extends Component {
   render(props) {

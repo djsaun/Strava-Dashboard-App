@@ -3,3 +3,9 @@ body {
   padding: 0;
   font-family: sans-serif;
 }
+
+.activities {
+  padding: 0 40px;
+  margin: 0 auto;
+  max-width: 1200px;
+}
