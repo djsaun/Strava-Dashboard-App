@@ -107,13 +107,19 @@ class App extends Component {
     this.retrieveActivities(process.env.REACT_APP_STRAVA_ID, this.state.postsNum);
   }
 
+  componentDidUpdate(prevProps, prevState) {
+    if (this.state.activityType !== prevState.activityType || this.state.speed !== prevState.speed) {
+      this.displayFilteredActivities();
+    }
+  }
+
   render() {
     return (
       <div className="App">
         <header className="App-header">
           <h1 className="App-title">Strava Stats Viewer</h1>
         </header>
-        <FilterBar updateSpeedToggle={this.updateSpeedToggle} updateTypeToggle={this.updateTypeToggle} displayFilteredActivities={this.displayFilteredActivities} displayFastestRuns={this.displayFastestRuns} displayFastestRides={this.displayFastestRides} />
+        <FilterBar updateSpeedToggle={this.updateSpeedToggle} updateTypeToggle={this.updateTypeToggle} />
         <div className="activities">
           {this.state.displayedActivities.map(activity => {
             return <Activity key={activity.id} data={activity} convertTime={this.convertMetersPerSecondToMilesPerHour} convertDistance={this.convertMeterstoMiles} />
