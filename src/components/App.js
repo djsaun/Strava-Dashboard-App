@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
 import '../css/App.css';
+import FilterBar from './FilterBar';
 import Activity from './Activity';
 import axios from 'axios';
-import { fastest } from 'sw-toolbox';
 
 class App extends Component {
   constructor(props) {
@@ -13,13 +13,17 @@ class App extends Component {
       displayedActivities: [],
       rides: [],
       runs: [],
-      postsNum: 200,
-      postsPerPage: 20
+      speed: '',
+      activityType: '',
+      postsNum: 200, // 200 is the max number of items that can be returned from the API at once
+      postsPerPage: 10
     };
 
     this.convertMetersPerSecondToMilesPerHour = this.convertMetersPerSecondToMilesPerHour.bind(this);
-    this.displayFastestRuns = this.displayFastestRuns.bind(this);
-    this.displayFastestRides = this.displayFastestRides.bind(this);
+    this.convertMeterstoMiles = this.convertMeterstoMiles.bind(this);
+    this.updateSpeedToggle = this.updateSpeedToggle.bind(this);
+    this.updateTypeToggle = this.updateTypeToggle.bind(this);
+    this.displayFilteredActivities = this.displayFilteredActivities.bind(this);
   }
 
   // Strava returns time in meters per second
@@ -28,6 +32,12 @@ class App extends Component {
     let convertedTime = time * 2.2369;
 
     return convertedTime.toFixed(2);
+  }
+
+  // Strava returns distance in meters
+  // Convert to miles
+  convertMeterstoMiles(distance) {
+    return (distance * 0.000621).toFixed(2)
   }
 
   retrieveActivities(id, resultsNum) {
@@ -43,43 +53,54 @@ class App extends Component {
       this.setState({activities});
 
       activities.slice(0, this.state.postsPerPage).map(activity => {
-        this.setState({displayedActivities: [...this.state.displayedActivities, activity]});
+        return this.setState({displayedActivities: [...this.state.displayedActivities, activity]});
       })
 
       activities.map(activity => {
         if (activity.type === 'Ride') {
-          this.setState({rides: [...this.state.rides, activity]});
+          return this.setState({rides: [...this.state.rides, activity]});
         }
 
         if (activity.type === 'Run') {
-          this.setState({runs: [...this.state.runs, activity]});
+          return this.setState({runs: [...this.state.runs, activity]});
         }
       })
     });
   }
 
-  displayFastestRuns() {
-    let fastestRuns = this.state.runs.slice(0, this.state.postsPerPage);
+  // Filter results based on selected speed and type inputs
+  displayFilteredActivities() {
+    let type = this.state.activityType;
+    let speed = this.state.speed;
+    let filteredActivities;
 
-    fastestRuns.sort((a, b) => {
-      return b.average_speed - a.average_speed;
-    });
+    if (type === 'ride') {
+      filteredActivities = this.state.rides;
+    } else if (type === 'run') {
+      filteredActivities = this.state.runs;
+    } else {
+      filteredActivities = this.state.displayedActivities;
+    }
+
+    filteredActivities = filteredActivities.slice(0, this.state.postsPerPage)
+
+    if (speed !== '') {
+      filteredActivities.sort((a, b) => {
+        return (speed === 'fast' ? b.average_speed - a.average_speed : a.average_speed - b.average_speed)
+      });
+    }
 
     this.setState({
-      displayedActivities: fastestRuns
+      displayedActivities: filteredActivities
     });
   }
 
-  displayFastestRides() {
-    let fastestRides = this.state.rides.slice(0, this.state.postsPerPage);
+  updateSpeedToggle(e) {
+    this.setState({speed: e.target.value})
+  }
 
-    fastestRides.sort((a, b) => {
-      return b.average_speed - a.average_speed;
-    });
-
-    this.setState({
-      displayedActivities: fastestRides
-    });
+  updateTypeToggle(e) {
+    this.setState({activityType: e.target.value})
   }
 
   componentDidMount() {
@@ -92,13 +113,10 @@ class App extends Component {
         <header className="App-header">
           <h1 className="App-title">Strava Stats Viewer</h1>
         </header>
-        <div>
-          <button onClick={this.displayFastestRuns}>Display Fastest Runs</button>
-          <button onClick={this.displayFastestRides}>Display Fastest Rides</button>
-        </div>
+        <FilterBar updateSpeedToggle={this.updateSpeedToggle} updateTypeToggle={this.updateTypeToggle} displayFilteredActivities={this.displayFilteredActivities} displayFastestRuns={this.displayFastestRuns} displayFastestRides={this.displayFastestRides} />
         <div className="activities">
           {this.state.displayedActivities.map(activity => {
-            return <Activity key={activity.id} data={activity} convertTime={this.convertMetersPerSecondToMilesPerHour} />
+            return <Activity key={activity.id} data={activity} convertTime={this.convertMetersPerSecondToMilesPerHour} convertDistance={this.convertMeterstoMiles} />
           })}
         </div>
       </div>
