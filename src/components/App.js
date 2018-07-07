@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import '../css/App.css';
 import FilterBar from './FilterBar';
+import User from './User';
 import Activity from './Activity';
 import axios from 'axios';
 
@@ -9,6 +10,15 @@ class App extends Component {
     super(props);
 
     this.state = {
+      user: {
+        firstname: '',
+        lastname: '',
+        city: '',
+        state: '',
+        sex: '',
+        follower_count: '',
+        friend_count: ''
+      },
       activities: [],
       displayedActivities: [],
       rides: [],
@@ -38,6 +48,29 @@ class App extends Component {
   // Convert to miles
   convertMeterstoMiles(distance) {
     return (distance * 0.000621).toFixed(2)
+  }
+
+  retrieveUserData() {
+    axios.get(`https://www.strava.com/api/v3/athlete`, {
+      headers: {
+        'Authorization': `Bearer ${process.env.REACT_APP_STRAVA_ACCESS_TOKEN}`
+      }
+    })
+    .then(response => {
+      const userData = response.data;
+
+      this.setState({
+        user: {
+          firstname: userData.firstname,
+          lastname: userData.lastname,
+          city: userData.city,
+          state: userData.state,
+          sex: userData.sex,
+          follower_count: userData.follower_count,
+          friend_count: userData.friend_count
+        }
+      })
+    })
   }
 
   retrieveActivities(id, resultsNum) {
@@ -104,6 +137,7 @@ class App extends Component {
   }
 
   componentDidMount() {
+    this.retrieveUserData();
     this.retrieveActivities(process.env.REACT_APP_STRAVA_ID, this.state.postsNum);
   }
 
@@ -119,6 +153,7 @@ class App extends Component {
         <header className="App-header">
           <h1 className="App-title">Strava Stats Viewer</h1>
         </header>
+        <User />
         <FilterBar updateSpeedToggle={this.updateSpeedToggle} updateTypeToggle={this.updateTypeToggle} />
         <div className="activities">
           {this.state.displayedActivities.map(activity => {
