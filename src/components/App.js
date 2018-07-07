@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import '../css/App.css';
 import Activity from './Activity';
 import axios from 'axios';
+import { fastest } from 'sw-toolbox';
 
 class App extends Component {
   constructor(props) {
@@ -9,7 +10,19 @@ class App extends Component {
 
     this.state = {
       activities: [],
+      postsNum: '20'
     };
+
+    this.convertMetersPerSecondToMilesPerHour = this.convertMetersPerSecondToMilesPerHour.bind(this);
+    this.displayFastestRuns = this.displayFastestRuns.bind(this);
+  }
+
+  // Strava returns time in meters per second
+  // Convert to miles per hour
+  convertMetersPerSecondToMilesPerHour(time) {
+    let convertedTime = time * 2.2369;
+
+    return convertedTime.toFixed(2);
   }
 
   retrieveActivities(id, resultsNum) {
@@ -23,12 +36,23 @@ class App extends Component {
     .then(response => {
       const activities = response.data;
       this.setState({activities});
-      console.log(activities)
     });
   }
 
   componentDidMount() {
-    this.retrieveActivities(process.env.REACT_APP_STRAVA_ID, '20');
+    this.retrieveActivities(process.env.REACT_APP_STRAVA_ID, this.state.postsNum);
+  }
+
+  displayFastestRuns() {
+    let fastestRuns = this.state.activities;
+
+    fastestRuns.sort((a, b) => {
+      return b.average_speed - a.average_speed;
+    });
+
+    this.setState({
+      activities: fastestRuns
+    });
   }
 
   render() {
@@ -37,9 +61,12 @@ class App extends Component {
         <header className="App-header">
           <h1 className="App-title">Strava Stats Viewer</h1>
         </header>
+        <div>
+          <button onClick={this.displayFastestRuns}>Display Fastest Runs</button>
+        </div>
         <div className="App-intro">
           {this.state.activities.map(activity => {
-            return <Activity key={activity.id} data={activity} />
+            return <Activity key={activity.id} data={activity} convertTime={this.convertMetersPerSecondToMilesPerHour} />
           })}
         </div>
       </div>

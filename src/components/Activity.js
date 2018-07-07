@@ -5,6 +5,7 @@ class Activity extends Component {
     return(
       <div className="activity">
         <h3>{this.props.data.name}</h3>
+        <p>Average Speed: {this.props.convertTime(this.props.data.average_speed)}</p>
       </div>
     )
   }
