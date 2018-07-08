@@ -72,9 +72,9 @@ class App extends Component {
     .then(response => {
       const userData = response.data;
 
-      this.setState({
-        ...this.state,
+      return this.setState({
         user: {
+          ...this.state.user,
           firstname: userData.firstname,
           lastname: userData.lastname,
           image: userData.profile,
@@ -85,10 +85,6 @@ class App extends Component {
           friend_count: userData.friend_count
         }
       })
-    })
-    .then(res => {
-      this.retriveUserStats(process.env.REACT_APP_STRAVA_ID);
-      return res;
     })
   }
 
@@ -102,7 +98,6 @@ class App extends Component {
       const statsData = response.data;
 
       return this.setState({
-        ...this.state,
         user: {
           ...this.state.user,
           rides: {
@@ -132,33 +127,22 @@ class App extends Component {
     })
     .then(response => {
       const activities = response.data;
-      this.setState({
-        ...this.state,
-        activities
-      });
-
+    
       activities.slice(0, this.state.postsPerPage).map(activity => {
-        return this.setState({
-          ...this.state,
-          displayedActivities: [...this.state.displayedActivities, activity]
-        });
+        this.setState({displayedActivities: [...this.state.displayedActivities, activity]});
       })
 
       activities.map(activity => {
         if (activity.type === 'Ride') {
-          return this.setState({
-            ...this.state,
-            rides: [...this.state.rides, activity]
-          });
+          this.setState({rides: [...this.state.rides, activity]});
         }
 
         if (activity.type === 'Run') {
-          return this.setState({ 
-            ...this.state,
-            runs: [...this.state.runs, activity]
-          });
+          this.setState({runs: [...this.state.runs, activity]});
         }
       })
+
+      return this.setState({activities});
     });
   }
 
@@ -199,6 +183,7 @@ class App extends Component {
 
   componentDidMount() {
     this.retrieveUserData();
+    this.retriveUserStats(process.env.REACT_APP_STRAVA_ID);
     this.retrieveActivities(process.env.REACT_APP_STRAVA_ID, this.state.postsNum);
   }
 
