@@ -13,11 +13,24 @@ class App extends Component {
       user: {
         firstname: '',
         lastname: '',
+        image: '',
         city: '',
         state: '',
         sex: '',
         follower_count: '',
-        friend_count: ''
+        friend_count: '',
+        rides: {
+          count: '',
+          distance: '',
+          time: '',
+          elevation: ''
+        },
+        runs: {
+          count: '',
+          distance: '',
+          time: '',
+          elevation: ''
+        }
       },
       activities: [],
       displayedActivities: [],
@@ -60,14 +73,50 @@ class App extends Component {
       const userData = response.data;
 
       this.setState({
+        ...this.state,
         user: {
           firstname: userData.firstname,
           lastname: userData.lastname,
+          image: userData.profile,
           city: userData.city,
           state: userData.state,
           sex: userData.sex,
           follower_count: userData.follower_count,
           friend_count: userData.friend_count
+        }
+      })
+    })
+    .then(res => {
+      this.retriveUserStats(process.env.REACT_APP_STRAVA_ID);
+      return res;
+    })
+  }
+
+  retriveUserStats(id) {
+    axios.get(`https://www.strava.com/api/v3/athletes/${id}/stats`, {
+      params: {
+        access_token: process.env.REACT_APP_STRAVA_ACCESS_TOKEN
+      }
+    })
+    .then(response => {
+      const statsData = response.data;
+
+      return this.setState({
+        ...this.state,
+        user: {
+          ...this.state.user,
+          rides: {
+            count: statsData.all_ride_totals.count,
+            distance: statsData.all_ride_totals.distance,
+            time: statsData.all_ride_totals.moving_time,
+            elevation: statsData.all_ride_totals.elevation_gain
+          },
+          runs: {
+            count: statsData.all_run_totals.count,
+            distance: statsData.all_run_totals.distance,
+            time: statsData.all_run_totals.moving_time,
+            elevation: statsData.all_run_totals.elevation_gain
+          }
         }
       })
     })
@@ -83,19 +132,31 @@ class App extends Component {
     })
     .then(response => {
       const activities = response.data;
-      this.setState({activities});
+      this.setState({
+        ...this.state,
+        activities
+      });
 
       activities.slice(0, this.state.postsPerPage).map(activity => {
-        return this.setState({displayedActivities: [...this.state.displayedActivities, activity]});
+        return this.setState({
+          ...this.state,
+          displayedActivities: [...this.state.displayedActivities, activity]
+        });
       })
 
       activities.map(activity => {
         if (activity.type === 'Ride') {
-          return this.setState({rides: [...this.state.rides, activity]});
+          return this.setState({
+            ...this.state,
+            rides: [...this.state.rides, activity]
+          });
         }
 
         if (activity.type === 'Run') {
-          return this.setState({runs: [...this.state.runs, activity]});
+          return this.setState({ 
+            ...this.state,
+            runs: [...this.state.runs, activity]
+          });
         }
       })
     });
@@ -153,7 +214,7 @@ class App extends Component {
         <header className="App-header">
           <h1 className="App-title">Strava Stats Viewer</h1>
         </header>
-        <User />
+        <User {...this.state.user} />
         <FilterBar updateSpeedToggle={this.updateSpeedToggle} updateTypeToggle={this.updateTypeToggle} />
         <div className="activities">
           {this.state.displayedActivities.map(activity => {
